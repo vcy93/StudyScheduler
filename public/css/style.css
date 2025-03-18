@@ -1,0 +1,75 @@
+body {
+    background-color: #f4f6f9;
+    font-family: 'Arial', sans-serif;
+}
+
+.schedule-card {
+    background-color: #fff;
+    border: 1px solid #e1e4e8;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    transition: transform 0.2s;
+}
+
+.schedule-card:hover {
+    transform: translateY(-5px);
+}
+
+.date-header {
+    font-size: 18px;
+    font-weight: bold;
+    color: #2c3e50;
+    margin-bottom: 15px;
+}
+
+.activity-list {
+    list-style: none;
+    padding-left: 0;
+}
+
+.activity-list li {
+    padding: 10px 15px;
+    border-bottom: 1px solid #e1e4e8;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.activity-list li:last-child {
+    border-bottom: none;
+}
+
+.activity-name {
+    font-size: 16px;
+    color: #333;
+}
+
+.activity-duration {
+    font-size: 14px;
+    color: #27ae60;
+    font-weight: bold;
+}
+
+/* .icon {
+    margin-right: 8px;
+} */
+
+.icon {
+    margin-right: 8px;
+    color: #3498db; /* Blue Color for Icons */
+}
+
+/* Specific icon colors (optional) */
+.fa-calendar-alt {
+    color: #2ecc71; /* Green for Calendar */
+}
+
+.fa-book {
+    color: #f39c12; /* Orange for Reading */
+}
+
+.fa-clock {
+    color: #e74c3c; /* Red for Duration */
+}
