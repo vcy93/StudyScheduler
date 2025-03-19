@@ -28,47 +28,62 @@ class Activity extends Model
     public function generateSchedule($activities)
     {
         try {
-            $currentDate = Carbon::now(); // Start from today
+            // $currentDate = Carbon::create(2025, 3, 22);
+            $currentDate = Carbon::now(); 
             $schedule = [];
             $remainingMinutes = $this->maxDailyMinutes;
-    
+            $totalWeeklyMinutes = 0; // Track total weekly minutes
+
             foreach ($activities as $activity) {
-                if ($remainingMinutes >= $activity['duration_minutes']) {
-                    // Schedule activity for the current day
-                    $schedule[$currentDate->format('d-M-Y')][] = [
-                        'activity' => $activity['name'],
-                        'duration' => $this->formatMinutes($activity['duration_minutes'])
-                    ];
-                    $remainingMinutes -= $activity['duration_minutes'];
-                } else {
-                    // Split activity into remaining + next day
-                    $splitMinutes = $remainingMinutes;
-                    $remainingPart = $activity['duration_minutes'] - $splitMinutes;
-    
-                    // Schedule the split activity for today
-                    $schedule[$currentDate->format('d-M-Y')][] = [
-                        'activity' => $activity['name'],
-                        'duration' => $this->formatMinutes($splitMinutes)
-                    ];
-    
-                    // Move to next available day and schedule the remaining part
-                    $currentDate = $this->getNextAvailableDate($currentDate);
-                    $schedule[$currentDate->format('d-M-Y')][] = [
-                        'activity' => $activity['name'],
-                        'duration' => $this->formatMinutes($remainingPart)
-                    ];
-                    $remainingMinutes = $this->maxDailyMinutes - $remainingPart;
+                // Stop adding activities if weekly limit (600 minutes) is reached
+                if ($totalWeeklyMinutes >= 600) {
+                    break;
                 }
-    
-                // Move to next day if remaining time is less than threshold
-                if ($remainingMinutes <= $this->threshold) {
+
+                $activityMinutes = $activity['duration_minutes'];
+
+                // Check if the activity fits into the remaining minutes of the current day
+                while ($activityMinutes > 0) {
+                    // If the remaining minutes can fit the activity, schedule it fully
+                    if ($remainingMinutes >= $activityMinutes) {
+                        if (($totalWeeklyMinutes + $activityMinutes) <= 600) {
+                            $schedule[$currentDate->format('d-M-Y')][] = [
+                                'activity' => $activity['name'],
+                                'duration' => $this->formatMinutes($activityMinutes)
+                            ];
+                            $totalWeeklyMinutes += $activityMinutes;
+                            $remainingMinutes -= $activityMinutes;
+                            $activityMinutes = 0; // Activity fully scheduled
+                        } else {
+                            // Skip if total weekly minutes exceed 600
+                            break 2;
+                        }
+                    } else {
+                        // Split activity: add part to the current day
+                        if (($totalWeeklyMinutes + $remainingMinutes) <= 600) {
+                            $schedule[$currentDate->format('d-M-Y')][] = [
+                                'activity' => $activity['name'],
+                                'duration' => $this->formatMinutes($remainingMinutes)
+                            ];
+                            $activityMinutes -= $remainingMinutes;
+                            $totalWeeklyMinutes += $remainingMinutes;
+                        }
+
+                        // Move to the next available day and add the remaining part
+                        $currentDate = $this->getNextAvailableDate($currentDate);
+                        $remainingMinutes = $this->maxDailyMinutes;
+                    }
+                }
+
+                // Move to the next day if remaining time is less than threshold or exhausted
+                if ($remainingMinutes <= $this->threshold || $totalWeeklyMinutes >= 600) {
                     $currentDate = $this->getNextAvailableDate($currentDate);
                     $remainingMinutes = $this->maxDailyMinutes;
                 }
             }
-    
+
             return $schedule;
-    
+
         } catch (\Exception $e) {
             Log::error('Error generating schedule: ' . $e->getMessage());
             return response()->json([
