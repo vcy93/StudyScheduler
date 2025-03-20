@@ -28,7 +28,7 @@ class Activity extends Model
     public function generateSchedule($activities)
     {
         try {
-            // $currentDate = Carbon::create(2025, 3, 22);
+            // $currentDate = Carbon::create(2025, 3, 22); //To test the holiday day issue with test case
             $currentDate = Carbon::now(); 
             $schedule = [];
             $remainingMinutes = $this->maxDailyMinutes;
