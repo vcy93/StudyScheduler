@@ -106,6 +106,20 @@ Module 4 (15m)
     php artisan test --filter=StudyScheduleTest
     ```
 
+## Branches
+
+### 1. **Main Branch**
+    The main branch contains the full implementation of the study schedule system, including functionality that works with a database to store and manage study activities. It provides full backend support for database migrations and seeders.
+     ```bash
+    git checkout main
+    ```
+
+### 2. **Dev Branch**
+    The dev branch contains the version of the application that uses file storage (such as a JSON file) for storing study activities. This branch is ideal when a simple file-based storage system is preferred over a full database setup.
+     ```bash
+    git checkout dev
+    ```
+
 ## Contributing
 
 Feel free to fork this repository and submit pull requests for any enhancements, bug fixes, or feature requests. We welcome contributions from the community to improve StudyScheduler!
