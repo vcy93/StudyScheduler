@@ -74,7 +74,7 @@ Module 4 (15m)
 
 - **JSON Format**: Data is exposed in JSON format, making it easy to integrate with other platforms, front-end frameworks, or APIs for further use.
 
-## Installation Instructions## Installation Instructions
+## Installation Instructions
 
 1. Clone the repository
     ```bash
