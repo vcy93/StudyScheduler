@@ -11,7 +11,20 @@ class StudyScheduleController extends Controller
     public function generateSchedule()
     {
         try {
-            $activities = Activity::where('is_complete', false)->get()->toArray();
+            // $activities = Activity::where('is_complete', false)->get()->toArray();
+            $filePath = storage_path('app/activity.json');
+            if (!file_exists($filePath)) {
+                Log::error('activity.json file not found!');
+                abort(404, 'Activity file not found.');
+            }
+        
+            // Read JSON content and convert to an array
+            $activities = json_decode(file_get_contents($filePath), true);
+        
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                Log::error('Error parsing activity.json: ' . json_last_error_msg());
+                abort(500, 'Error parsing activity data.');
+            }
 
             $activityModel = new Activity();
             $schedule = $activityModel->generateSchedule($activities);
