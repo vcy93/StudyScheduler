@@ -46,6 +46,15 @@ class Activity extends Model
                 while ($activityMinutes > 0) {
                     // If the remaining minutes can fit the activity, schedule it fully
                     if ($remainingMinutes >= $activityMinutes) {
+
+                        // Check if current date is a holiday, if so skip it
+                        if (in_array($currentDate->toDateString(), $this->holidays)) {
+                            // Move to the next available date if it's a holiday
+                            $currentDate = $this->getNextAvailableDate($currentDate);
+                            $remainingMinutes = $this->maxDailyMinutes;
+                            continue; // Skip to the next loop iteration
+                        }
+
                         if (($totalWeeklyMinutes + $activityMinutes) <= 600) {
                             $schedule[$currentDate->format('d-M-Y')][] = [
                                 'activity' => $activity['name'],
