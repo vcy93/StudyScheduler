@@ -84,4 +84,40 @@ class StudyScheduleController extends Controller
             'totalStudyTime' => $studyTime['total_study_time'],
         ]);
     }
+
+
+    public function showWeeklySchedule()
+    {
+        // Path to your activities JSON file
+        $filePath = storage_path('app/activity.json');
+        if (!file_exists($filePath)) {
+            Log::error('activity.json file not found!');
+            abort(404, 'Activity file not found.');
+        }
+
+        // Read JSON content and convert to an array
+        $activities = json_decode(file_get_contents($filePath), true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            Log::error('Error parsing activity.json: ' . json_last_error_msg());
+            abort(500, 'Error parsing activity data.');
+        }
+
+        // Initialize the Activity model
+        $activityModel = new Activity();
+        
+        // Generate the schedule dynamically for all weeks
+        $weeksSchedule = $activityModel->generateDynamicSchedule($activities);
+
+        // Calculate the total study time for each week
+        $studyTimeByWeek = [];
+        foreach ($weeksSchedule as $weekIndex => $schedule) {
+            $studyTimeByWeek[$weekIndex] = $activityModel->calculateWeeklyStudyTime($schedule)['total_study_time'];
+        }
+
+        // Return the view with the necessary data
+        return view('weeklyschedule', [
+            'weeksSchedule' => $weeksSchedule,
+            'studyTimeByWeek' => $studyTimeByWeek,
+        ]);
+    }
 }

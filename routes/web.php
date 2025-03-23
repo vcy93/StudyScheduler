@@ -9,3 +9,4 @@ Route::get('/', function () {
 
 Route::get('/generate-schedule', [StudyScheduleController::class, 'generateSchedule']);
 Route::get('/home', [StudyScheduleController::class, 'showSchedule']);
+Route::get('/weeks-ctivites', [StudyScheduleController::class, 'showWeeklySchedule']);

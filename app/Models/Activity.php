@@ -102,6 +102,165 @@ class Activity extends Model
         }
     }
 
+    // Generate the weekly study schedule
+    // public function generateDynamicSchedule($activities)
+    // {
+    //     try {
+    //         $currentDate = Carbon::now();  // Start from the current date
+    //         $schedule = [];
+    //         $remainingMinutes = $this->maxDailyMinutes;
+    //         $totalWeeklyMinutes = 0;
+    //         $weekIndex = 0;
+
+    //         foreach ($activities as $activity) {
+    //             $activityMinutes = $activity['duration_minutes'];
+
+    //             while ($activityMinutes > 0) {
+    //                 // Check if current day's remaining minutes are enough to fit the activity
+    //                 if ($remainingMinutes >= $activityMinutes) {
+    //                     // Check if current date is a holiday, if so skip it
+    //                     if (in_array($currentDate->toDateString(), $this->holidays)) {
+    //                         // Move to the next available date if it's a holiday
+    //                         $currentDate = $this->getNextAvailableDate($currentDate);
+    //                         $remainingMinutes = $this->maxDailyMinutes;
+    //                         continue; // Skip to the next loop iteration
+    //                     }
+
+                        
+    //                     // Add activity to current day
+    //                     if (!isset($schedule[$weekIndex][$currentDate->format('d-M-Y')])) {
+    //                         $schedule[$weekIndex][$currentDate->format('d-M-Y')] = [];
+    //                     }
+    //                     $schedule[$weekIndex][$currentDate->format('d-M-Y')][] = [
+    //                         'activity' => $activity['name'],
+    //                         'duration' => $this->formatMinutes($activityMinutes),
+    //                     ];
+
+    //                     $totalWeeklyMinutes += $activityMinutes;
+    //                     $remainingMinutes -= $activityMinutes;
+    //                     $activityMinutes = 0;  // Activity is fully scheduled
+    //                 } else {
+    //                     // If activity doesn't fit today, allocate the remaining minutes and move to the next day
+    //                     if ($remainingMinutes > 0) {
+    //                         $schedule[$weekIndex][$currentDate->format('d-M-Y')][] = [
+    //                             'activity' => $activity['name'],
+    //                             'duration' => $this->formatMinutes($remainingMinutes),
+    //                         ];
+    //                         $activityMinutes -= $remainingMinutes;
+    //                         $totalWeeklyMinutes += $remainingMinutes;
+    //                     }
+
+    //                     // Move to the next available day
+    //                     $currentDate = $this->getNextAvailableDate($currentDate);
+    //                     $remainingMinutes = $this->maxDailyMinutes;
+    //                 }
+
+    //                 // If weekly limit (600 minutes) is reached, move to the next week
+    //                 if ($totalWeeklyMinutes >= 600) {
+    //                     $weekIndex++;
+    //                     $totalWeeklyMinutes = 0;
+    //                 }
+    //             }
+
+    //             // Move to the next day if remaining time is less than the threshold
+    //             if ($remainingMinutes <= 10) {
+    //                 $currentDate = $this->getNextAvailableDate($currentDate);
+    //                 $remainingMinutes = $this->maxDailyMinutes;
+    //             }
+    //         }
+
+    //         return $schedule;
+
+    //     } catch (\Exception $e) {
+    //         Log::error('Error generating schedule: ' . $e->getMessage());
+    //         return response()->json([
+    //             'success' => false,
+    //             'error' => 'An error occurred while generating the schedule: ' . $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
+
+    public function generateDynamicSchedule($activities)
+{
+    try {
+        $currentDate = Carbon::now();  // Start from the current date
+        $schedule = [];
+        $remainingMinutes = $this->maxDailyMinutes;
+        $totalWeeklyMinutes = 0; // Track total minutes scheduled for the week
+        $weekIndex = 0; // Track current week
+
+        foreach ($activities as $activity) {
+            $activityMinutes = $activity['duration_minutes'];
+
+            while ($activityMinutes > 0) {
+                // If the remaining minutes in the day can fit the activity
+                if ($remainingMinutes >= $activityMinutes) {
+                    // Check if current date is a holiday, if so skip it
+                    if (in_array($currentDate->toDateString(), $this->holidays)) {
+                        // Skip to the next available date if it's a holiday
+                        $currentDate = $this->getNextAvailableDate($currentDate);
+                        $remainingMinutes = $this->maxDailyMinutes; // Reset remaining minutes for the next day
+                        continue; // Skip the current loop iteration
+                    }
+
+                    // Add activity to current day
+                    if (!isset($schedule[$weekIndex][$currentDate->format('d-M-Y')])) {
+                        $schedule[$weekIndex][$currentDate->format('d-M-Y')] = [];
+                    }
+
+                    // Add activity with the current day's duration
+                    $schedule[$weekIndex][$currentDate->format('d-M-Y')][] = [
+                        'activity' => $activity['name'],
+                        'duration' => $this->formatMinutes($activityMinutes),
+                    ];
+
+                    // Deduct the activity minutes from the available time in the day
+                    $totalWeeklyMinutes += $activityMinutes;
+                    $remainingMinutes -= $activityMinutes;
+                    $activityMinutes = 0;  // Activity is fully scheduled for today
+                } else {
+                    // If the activity doesn't fit today, allocate the remaining minutes and move to the next day
+                    if ($remainingMinutes > 0) {
+                        $schedule[$weekIndex][$currentDate->format('d-M-Y')][] = [
+                            'activity' => $activity['name'],
+                            'duration' => $this->formatMinutes($remainingMinutes),
+                        ];
+                        $activityMinutes -= $remainingMinutes;
+                        $totalWeeklyMinutes += $remainingMinutes;
+                    }
+
+                    // Move to the next available day
+                    $currentDate = $this->getNextAvailableDate($currentDate);
+                    $remainingMinutes = $this->maxDailyMinutes; // Reset remaining minutes for the next day
+                }
+
+                // Check if the weekly limit (600 minutes) is reached, then move to the next week
+                if ($totalWeeklyMinutes >= 600) {
+                    $weekIndex++; // Move to the next week
+                    $totalWeeklyMinutes = 0; // Reset weekly minutes
+                }
+            }
+
+            // Move to the next day if remaining time is less than the threshold
+            if ($remainingMinutes <= 10) {
+                $currentDate = $this->getNextAvailableDate($currentDate);
+                $remainingMinutes = $this->maxDailyMinutes;
+            }
+        }
+
+        return $schedule;
+
+    } catch (\Exception $e) {
+        Log::error('Error generating schedule: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'error' => 'An error occurred while generating the schedule: ' . $e->getMessage(),
+        ], 500);
+    }
+}
+
+
+    
     //Get the next available date (skip weekends and holidays).
     private function getNextAvailableDate($currentDate)
     {
